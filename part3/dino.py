@@ -338,9 +338,12 @@ class DinoGame:
         self.dino.update()
 
         self.spawn_timer += 1
+        # 1. 決定「什麼時候」生怪 (Timer)
         if self.spawn_timer > current_spawn_threshold:
+            # 2. 決定「生不生」 (60% 機率會生，40% 落空，讓節奏有變化)
             if random.random() < 0.6: 
                 start_x = self.width + random.randint(0, 50)
+                # 3. 決定「生什麼」 (抽獎邏輯)
                 rng = random.random()
                 # ### [OOP] 多型物件生成
                 # 不管生成的是 HealthPack, Cactus, Bird 還是 Bat，
