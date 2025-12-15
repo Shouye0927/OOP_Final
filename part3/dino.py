@@ -1,7 +1,3 @@
-'''
-Dino Fighter Ultimate: OOP Project Final Version
-檔案名稱: warehouse_robot.py
-'''
 import random
 import sys
 import pygame
@@ -15,7 +11,7 @@ class Action(Enum):
     SHOOT = 2
     DROP = 3
 
-# 調色盤
+# 調色盤 (省略...)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 50, 50)       
@@ -56,6 +52,8 @@ class Particle:
 
 class ParticleSystem:
     def __init__(self):
+        # ### [OOP] 組合 (Composition)
+        # ParticleSystem "擁有" 多個 Particle 物件。
         self.particles = []
 
     def emit(self, x, y, color, count=10):
@@ -70,6 +68,9 @@ class ParticleSystem:
 
 # --- 2. 核心 OOP 架構 ---
 
+# ### [OOP] 基礎類別 (Base Class)
+# 定義所有遊戲物件共有的屬性 (x, y, w, h) 和行為 (draw, collides_with)。
+# 這符合 "Don't Repeat Yourself" (DRY) 原則。
 class GameObject:
     def __init__(self, x, y, w, h, color):
         self.x = x
@@ -81,12 +82,18 @@ class GameObject:
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, (self.x, self.y, self.w, self.h))
 
+    # ### [OOP] 共用邏輯
+    # 所有繼承 GameObject 的子類別 (Dino, Bullet, Obstacle) 自動擁有此功能，
+    # 不需要重複寫碰撞偵測代碼。
     def collides_with(self, other):
         return (self.x < other.x + other.w and
                 self.x + self.w > other.x and
                 self.y < other.y + other.h and
                 self.y + self.h > other.y)
 
+
+# ### [OOP] 繼承 (Inheritance)
+# Bullet 繼承自 GameObject，自動獲得 x, y, w, h 等屬性。
 class Bullet(GameObject):
     def __init__(self, x, y):
         super().__init__(x, y, 15, 6, BULLET_COLOR)
@@ -95,9 +102,14 @@ class Bullet(GameObject):
     def move(self):
         self.x += self.speed
     
+    # ### [OOP] 多型 (Polymorphism) - 覆寫 (Override)
+    # 子類別重新定義了父類別的 draw 方法。
+    # 這裡將矩形改為圓角矩形，表現出與一般 GameObject 不同的行為。
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, (self.x, self.y, self.w, self.h), border_radius=3)
 
+
+# ### [OOP] 繼承 (Inheritance)
 class Dino(GameObject):
     def __init__(self):
         super().__init__(50, 250, 40, 40, DINO_COLOR)
@@ -106,6 +118,9 @@ class Dino(GameObject):
         self.gravity = 2.0      
         self.jump_strength = -25
         self.base_y = 250
+        # ### [OOP] 封裝 (Encapsulation) - 數據保護
+        # hp 和 invincible_timer 是物件內部的狀態，
+        # 不應該由外部直接修改 (例如不要在外面寫 dino.hp -= 1)。
         self.max_hp = 3
         self.hp = self.max_hp
         self.invincible_timer = 0 
@@ -131,6 +146,10 @@ class Dino(GameObject):
         if self.is_jumping:
             self.jump_velocity = 20 
 
+    # ### [OOP] 封裝 (Encapsulation) - 行為控制
+    # 外部透過此方法與 Dino 互動。
+    # 這個方法內部處理了「無敵時間」的邏輯判斷，外部呼叫者不需要知道細節，
+    # 只要知道「呼叫此函數嘗試扣血」即可。
     def take_damage(self):
         if self.invincible_timer == 0:
             self.hp -= 1
@@ -138,12 +157,16 @@ class Dino(GameObject):
             return True
         return False
     
+    # ### [OOP] 封裝 (Encapsulation)
+    # 同樣的，補血邏輯 (不能超過上限) 被封裝在這裡。
     def heal(self):
         if self.hp < self.max_hp:
             self.hp += 1
             return True
         return False
 
+    # ### [OOP] 多型 (Polymorphism) - 覆寫
+    # Dino 的畫法包含閃爍效果 (無敵時間) 和眼睛繪製，與父類別不同。
     def draw(self, surface):
         if self.invincible_timer > 0 and self.invincible_timer % 4 < 2: return
         pygame.draw.rect(surface, self.color, (self.x, self.y, self.w, self.h))
@@ -154,6 +177,9 @@ class Dino(GameObject):
 
 # --- 3. 障礙物體系 ---
 
+# ### [OOP] 中層抽象 (Abstraction)
+# Obstacle 繼承 GameObject，並增加了 speed 和 shootable 屬性。
+# 它作為所有具體障礙物 (Cactus, Bird, Bat) 的父類別。
 class Obstacle(GameObject):
     def __init__(self, x, y, w, h, color, speed, shootable):
         super().__init__(x, y, w, h, color)
@@ -163,10 +189,15 @@ class Obstacle(GameObject):
     def move(self, speed_multiplier):
         self.x -= self.speed * speed_multiplier
 
+
+# ### [OOP] 多層繼承 (Multilevel Inheritance)
+# Cactus -> Obstacle -> GameObject
 class Cactus(Obstacle):
     def __init__(self, start_x):
         super().__init__(start_x, 250, 25, 45, CACTUS_COLOR, 7, False)
     
+    # ### [OOP] 多型 - 具體實作
+    # 仙人掌有自己獨特的形狀繪製方式。
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, (self.x + 8, self.y, 10, self.h), border_radius=3)
         pygame.draw.rect(surface, self.color, (self.x, self.y + 10, 26, 8), border_radius=3)
@@ -178,6 +209,7 @@ class Bird(Obstacle):
         rand_y = random.randint(150, 230) 
         super().__init__(start_x, rand_y, 35, 25, BIRD_COLOR, 9, True)
     
+    # ### [OOP] 多型 - 具體實作
     def draw(self, surface):
         pygame.draw.ellipse(surface, self.color, (self.x, self.y, self.w, self.h))
         pygame.draw.polygon(surface, WHITE, [(self.x+10, self.y+10), (self.x+20, self.y-10), (self.x+25, self.y+10)])
@@ -188,12 +220,15 @@ class Bat(Obstacle):
         rand_y = random.randint(200, 250) 
         super().__init__(start_x, rand_y, 30, 20, BAT_COLOR, 11, True)
     
+    # ### [OOP] 多型 - 具體實作
     def draw(self, surface):
         center = (self.x + 15, self.y + 10)
         pygame.draw.circle(surface, self.color, center, 10)
         pygame.draw.polygon(surface, self.color, [(self.x+15, self.y+10), (self.x-5, self.y-5), (self.x+5, self.y+15)])
         pygame.draw.polygon(surface, self.color, [(self.x+15, self.y+10), (self.x+35, self.y-5), (self.x+25, self.y+15)])
 
+
+#補包的部分
 class HealthPack(Obstacle):
     def __init__(self, start_x):
         rand_y = random.randint(180, 240)
@@ -206,8 +241,10 @@ class HealthPack(Obstacle):
         pygame.draw.rect(surface, RED, (cx - 4, cy - 10, 8, 20))
         pygame.draw.rect(surface, RED, (cx - 10, cy - 4, 20, 8))
 
-# --- 4. 介面管理 ---
 
+# --- 4. 介面管理 ---
+# ### [OOP] 單一職責原則 (SRP)
+# 這個類別只負責「畫圖」，不負責遊戲邏輯 (例如不決定什麼時候扣血)。
 class UIManager:
     def __init__(self, width, height, font):
         self.width = width
@@ -215,6 +252,7 @@ class UIManager:
         self.font = font
     
     def draw_hud(self, surface, score, speed, hp, bullets_left):
+        # (繪製程式碼省略，這屬於封裝的實作細節)
         pygame.draw.rect(surface, UI_DARK, (0, 0, self.width, 50))
         pygame.draw.line(surface, WHITE, (0, 50), (self.width, 50), 2)
         
@@ -248,13 +286,14 @@ class UIManager:
         surface.blit(s_surf, s_rect)
 
 # --- 5. 遊戲引擎 ---
-
 class DinoGame:
     def __init__(self, width=700, height=350, fps=30):
         self.width = width
         self.height = height
         self.fps = fps
         self._init_pygame()
+        # ### [OOP] 組合 (Composition)
+        # DinoGame 是一個容器，它組合了 UIManager, ParticleSystem。
         self.ui = UIManager(width, height, self.font)
         self.particles = ParticleSystem() 
         self.state = 'WAITING' 
@@ -269,7 +308,11 @@ class DinoGame:
 
     def reset(self, seed=None):
         random.seed(seed)
+        # ### [OOP] 組合 (Composition)
+        # 遊戲重置時，重新創建 Dino 物件。
         self.dino = Dino()
+        # ### [OOP] 聚合 (Aggregation)
+        # 透過 List 儲存所有的障礙物與子彈物件。
         self.obstacles = []
         self.bullets = []
         self.particles = ParticleSystem()
@@ -278,9 +321,10 @@ class DinoGame:
         self.spawn_timer = 0
         self.game_speed = 1.0
 
+
+    #每一幀都會執行的邏輯
     def step(self, action: Action):
         if self.state != 'RUNNING': return False, self.state == 'GAME_OVER'
-
         if self.spawn_timer % 5 == 0: self.score += 1
         self.game_speed = 1.0 + (self.score / 600.0)
         current_spawn_threshold = max(20, 60 - int(self.score / 15))
@@ -298,6 +342,9 @@ class DinoGame:
             if random.random() < 0.6: 
                 start_x = self.width + random.randint(0, 50)
                 rng = random.random()
+                # ### [OOP] 多型物件生成
+                # 不管生成的是 HealthPack, Cactus, Bird 還是 Bat，
+                # 它們都被視為 Obstacle 存入 self.obstacles 列表中。
                 if rng < 0.1:     self.obstacles.append(HealthPack(start_x)) 
                 elif rng < 0.45:  self.obstacles.append(Cactus(start_x))
                 elif rng < 0.75:  self.obstacles.append(Bird(start_x))
@@ -309,10 +356,16 @@ class DinoGame:
             if b.x > self.width: self.bullets.remove(b)
 
         for obj in self.obstacles[:]:
+            # ### [OOP] 多型行為 (Polymorphic Behavior)
+            # 這裡呼叫 obj.move() 或 obj.draw() 時，
+            # 程式不需要檢查 obj 是仙人掌還是鳥，
+            # 物件自己知道該怎麼移動、怎麼畫。
             obj.move(self.game_speed)
             
             hit_by_bullet = False
             for b in self.bullets[:]:
+                # ### [OOP] 父類別方法複用
+                # collides_with 是定義在 GameObject 中的，所有物件都能用。
                 if b.collides_with(obj):
                     if obj.shootable:
                         self.score += 5
@@ -328,14 +381,19 @@ class DinoGame:
                         self.bullets.remove(b) 
                         break
             if hit_by_bullet: continue
-
+            
             if self.dino.collides_with(obj):
+                # ### [OOP] 類型檢查 (Type Checking)
+                # 雖然通常用多型，但偶爾需要判斷特定類型 (isinstance) 來執行特殊邏輯 (補血)。
                 if isinstance(obj, HealthPack):
                     if self.dino.heal():
                         self.particles.emit(self.dino.x, self.dino.y, HEART_RED, 10)
                     self.obstacles.remove(obj)
                     continue 
-
+                
+                # ### [OOP] 封裝方法的應用
+                # 不直接寫 self.dino.hp -= 1，而是呼叫 take_damage()，
+                # 確保無敵時間邏輯被正確執行。
                 if self.dino.take_damage():
                     self.particles.emit(self.dino.x + 20, self.dino.y + 20, RED, 10)
 
@@ -355,6 +413,9 @@ class DinoGame:
         pygame.draw.line(self.window, (100, 100, 100), (0, 290), (self.width, 290), 3)
 
         self.dino.draw(self.window)
+        
+        # ### [OOP] 多型繪圖
+        # 遍歷所有障礙物，每個物件呼叫自己的 draw()。
         for obj in self.obstacles: obj.draw(self.window)
         for b in self.bullets: b.draw(self.window)
         
