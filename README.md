@@ -88,11 +88,9 @@ This is the core of our project. We designed a custom side-scrolling shooter gam
 
 ### 🎮 Game Controls (Human Mode)
 
-  * **SPACE** or **UP**: Jump
+  * **W** : Jump
   * **F**: Shoot (Consumes ammo)
-  * **S** or **DOWN**: Fast Drop
-  * **R**: Restart Game (Only valid during "GAME OVER")
-  * **ESC**: Quit
+  * **S**: Fast Drop(When jump)
 
 ### 🏗️ OOP Design Principles
 
