@@ -1,53 +1,50 @@
 '''
-Gym Wrapper for Dino Fighter Ultimate
-檔案名稱: oop_project_env.py
+Gym Environment for Simple Dino Run
 '''
 import gymnasium as gym
 from gymnasium import spaces
 from gymnasium.envs.registration import register
-import dino as wr # 匯入你的遊戲檔案
+import warehouse_robot as wr
 import numpy as np
 
-# 註冊環境 ID
 register(
-    id='dino-fighter-v0',
-    entry_point='oop_project_env:DinoEnv', # 這裡一定要對應下面的 class 名稱
+    id='dino-run-v0', # 修改 ID 避免混淆
+    entry_point='oop_project_env:DinoRunEnv',
 )
 
-class DinoEnv(gym.Env):
+class DinoRunEnv(gym.Env):
     metadata = {"render_modes": ["human"], 'render_fps': 30}
 
     def __init__(self, render_mode=None):
         self.render_mode = render_mode
         self.game = wr.DinoGame()
         
-        # Action: 0=RUN, 1=JUMP, 2=SHOOT, 3=DROP
-        self.action_space = spaces.Discrete(4)
+        # Action: 0=跑, 1=跳
+        self.action_space = spaces.Discrete(2)
 
-        # Observation: [Dino Y, Dino HP, Ammo, Nearest Obstacle Dist, Nearest Obstacle Type]
+        # Observation: [恐龍Y高度, 最近障礙物距離X, 最近障礙物高度Y]
+        # 用無限大作為邊界，因為距離可能很遠
         self.observation_space = spaces.Box(
-            low=np.array([0, 0, 0, 0, 0]), 
-            high=np.array([1000, 3, 3, 1000, 5]), 
+            low=np.array([0, 0, 0]), 
+            high=np.array([1000, 1000, 1000]), 
             dtype=np.float32
         )
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.game.reset(seed=seed)
-        self.game.state = 'RUNNING' # AI 模式下直接開始
         obs = self._get_obs()
         if self.render_mode == 'human':
             self.game.render()
         return obs, {}
 
     def step(self, action):
-        # 將 int 轉為 Enum
-        game_action = list(wr.Action)[action]
+        game_action = wr.Action(action)
         _, is_done = self.game.step(game_action)
 
-        # 獎勵設計 (給 AI 參考用)
-        reward = 1
-        if is_done: reward = -100
+        reward = 1 # 活著就給分
+        if is_done:
+            reward = -10 # 死了扣分
 
         obs = self._get_obs()
         if self.render_mode == 'human':
@@ -58,38 +55,29 @@ class DinoEnv(gym.Env):
     def _get_obs(self):
         # 找出最近的一個障礙物
         dist = 999
-        obs_type = 0 # 0=None, 1=Cactus, 2=Bird, 3=Bat, 4=Heal
+        obs_y = 0
         
         if self.game.obstacles:
-            # 找到第一個在恐龍右邊的障礙物
+            # 找到第一個 X > 恐龍X 的障礙物
             for obj in self.game.obstacles:
                 if obj.x > self.game.dino.x:
                     dist = obj.x - self.game.dino.x
-                    if isinstance(obj, wr.Cactus): obs_type = 1
-                    elif isinstance(obj, wr.Bird): obs_type = 2
-                    elif isinstance(obj, wr.Bat): obs_type = 3
-                    elif isinstance(obj, wr.HealthPack): obs_type = 4
+                    obs_y = obj.y
                     break
         
-        return np.array([
-            self.game.dino.y,
-            self.game.dino.hp,
-            3 - len(self.game.bullets),
-            dist,
-            obs_type
-        ], dtype=np.float32)
+        return np.array([self.game.dino.y, dist, obs_y], dtype=np.float32)
 
     def render(self):
         self.game.render()
 
-# AI 測試區 (Random Agent)
 if __name__=="__main__":
-    env = gym.make('dino-fighter-v0', render_mode='human')
+    # 測試 AI 隨機跳
+    env = gym.make('dino-run-v0', render_mode='human')
     obs = env.reset()[0]
     
-    print("AI Running Random Agent...")
     for _ in range(500):
-        action = env.action_space.sample()
+        # 10% 機率跳，不然一直跑
+        action = 1 if np.random.rand() < 0.1 else 0
         obs, reward, terminated, _, _ = env.step(action)
         if terminated:
             env.reset()
