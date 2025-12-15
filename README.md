@@ -7,9 +7,8 @@ This repository contains the final group project for the Object-Oriented Program
 | Student ID | Name |
 | :--- | :--- |
 | **[B124020034]** | **[蔡承家]** |
-| **[Student ID]** | **[Name]** |
-| **[Student ID]** | **[Name]** |
-| **[Student ID]** | **[Name]** |
+| **[B124020023]** | **[簡昱安]** |
+| **[B124020043]** | **[傅志宏]** |
 
 ---
 
