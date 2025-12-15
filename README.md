@@ -1,7 +1,4 @@
-Here is the complete `README.md` file in English, designed to cover all parts of your project (Mountain Car, Frozen Lake, and the Dino OOP game). You can copy this directly into your repository.
 
-````markdown
-# OOP & Reinforcement Learning Group Project
 
 This repository contains the final group project for the Object-Oriented Programming (OOP) course. It integrates **Reinforcement Learning (RL)** concepts with **OOP principles** across three distinct parts: solving Classic Control problems, tuning parameters for Frozen Lake, and designing a custom game environment ("Dino Fighter Ultimate") compatible with Gymnasium.
 
@@ -30,7 +27,6 @@ python -m venv .venv
 .venv\Scripts\activate
 # Mac/Linux:
 source .venv/bin/activate
-````
 
 ### 2\. Install Dependencies
 
