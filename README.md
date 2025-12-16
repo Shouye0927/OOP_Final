@@ -1,11 +1,9 @@
-
-
 This repository contains the final group project for the Object-Oriented Programming (OOP) course. It integrates **Reinforcement Learning (RL)** concepts with **OOP principles** across three distinct parts: solving Classic Control problems, tuning parameters for Frozen Lake, and designing a custom game environment ("Dino Fighter Ultimate") compatible with Gymnasium.
 
 ## Group Members
 
-| Student ID | Name |
-| :--- | :--- |
+| Student ID       | Name         |
+| :--------------- | :----------- |
 | **[B124020034]** | **[蔡承家]** |
 | **[B124020023]** | **[簡昱安]** |
 | **[B124020043]** | **[傅志宏]** |
@@ -17,7 +15,8 @@ This repository contains the final group project for the Object-Oriented Program
 This project requires **Python 3.x** and the **Gymnasium** library.
 
 ### 1. Set up a Virtual Environment (Recommended)
-```bash
+
+````bash
 # Create a virtual environment
 python -m venv .venv
 
@@ -35,9 +34,9 @@ Install the required packages, including Gymnasium (with classic control support
 pip install "gymnasium[classic_control]"
 pip install gymnasium[box2d]
 pip install numpy matplotlib pygame
-```
+````
 
------
+---
 
 ## 📂 Part 1: Mountain Car (Q-Learning)
 
@@ -53,22 +52,34 @@ python part1/mountain_car.py --train --episodes 5000
 python part1/mountain_car.py --render --episodes 10
 ```
 
------
+---
 
 ## ❄️ Part 2: Frozen Lake
 
-The goal of this part is to tune the hyperparameters of a Q-Learning agent to achieve a **consistent success rate \> 0.70** on the Frozen Lake 8x8 map (Slippery).
+The goal of this part is to tune the hyperparameters of a Q-Learning agent to achieve a high success rate on the Frozen Lake 8x8 map (Slippery).
 
 ### Methodology
 
-We tuned the following parameters without changing the number of episodes or steps:
+We implemented Q-Learning with several optimizations to handle the slippery environment:
 
-  * **`min_exploration_rate`**: Adjusted to ensure the agent continues to explore slightly even in late stages.
-  * **`epsilon_decay_rate`**: Tuned to balance exploration (trying new paths) and exploitation (using the best-known path).
+1.  **Hyperparameter Tuning**:
+
+    - **Learning Rate (`alpha`)**: Initialized at `0.03`, reduced to `0.0001` when exploration stops to fine-tune the policy.
+    - **Discount Factor (`gamma`)**: Set to `0.99` to prioritize long-term rewards.
+    - **Epsilon Decay**: Linear decay rate of `0.0000925` to ensure sufficient exploration over 15,000 episodes.
+
+2.  **Reward Shaping**:
+
+    - Introduced a penalty (`-0.2`) for falling into holes to discourage dangerous paths, helping the agent learn safety faster than standard sparse rewards.
+
+3.  **Best Model Checkpointing & Early Stopping**:
+    - The training loop monitors the success rate over a sliding window of the last **500 episodes**.
+    - It automatically saves the model (`frozen_lake8x8.pkl`) whenever a new best success rate (above 60%) is achieved.
+    - Training stops early if the success rate reaches **80%** to prevent overfitting.
 
 ### How to Run
 
-Running the script will perform training and then evaluate the agent's success rate. It also generates a training curve (`frozen_lake8x8.png`).
+Run the script and follow the interactive prompt:
 
 ```bash
 python part2/frozen_lake.py
@@ -76,10 +87,10 @@ python part2/frozen_lake.py
 
 ### Results
 
-  * **Final Success Rate**: `XX.XX%` (Replace with your actual result from the console output)
-  * **Convergence Plot**: See `frozen_lake8x8.png`
+- **Final Success Rate**: `64.10%` (Replace with your actual result from the console output)
+- **Convergence Plot**: See `frozen_lake8x8.png`
 
------
+---
 
 ## 🦖 Part 3: Dino Fighter Ultimate (OOP Project)
 
@@ -87,9 +98,9 @@ This is the core of our project. We designed a custom side-scrolling shooter gam
 
 ### 🎮 Game Controls (Human Mode)
 
-  * **W** : Jump
-  * **F**: Shoot (Consumes ammo)
-  * **S**: Fast Drop(When jump)
+- **W** : Jump
+- **F**: Shoot (Consumes ammo)
+- **S**: Fast Drop(When jump)
 
 ### 🏗️ OOP Design Principles
 
@@ -99,40 +110,40 @@ We applied the four pillars of OOP to ensure modularity and extensibility:
 
 We defined a base class `GameObject` that handles common properties like position (`x, y`), dimensions (`w, h`), and collision detection (`collides_with`).
 
-  * **Parent Class**: `GameObject`
-  * **Child Classes**: `Dino`, `Bullet`, `Obstacle` (which is further inherited by `Cactus`, `Bird`, `Bat`, `HealthPack`).
-  * **Benefit**: Reduces code duplication. All objects automatically inherit collision logic.
+- **Parent Class**: `GameObject`
+- **Child Classes**: `Dino`, `Bullet`, `Obstacle` (which is further inherited by `Cactus`, `Bird`, `Bat`, `HealthPack`).
+- **Benefit**: Reduces code duplication. All objects automatically inherit collision logic.
 
 #### 2\. Polymorphism
 
 Different objects override standard methods to exhibit unique behaviors.
 
-  * **`draw(surface)`**: The `Dino` class draws a character with eyes, while `Bullet` draws a rounded rectangle, and `Bird`/`Bat` use polygon drawing for complex shapes.
-  * **`move()`**: `Bullet` moves to the right, while `Obstacle` subclasses move to the left. The game loop calls `obj.move()` without needing to know the specific type of object.
+- **`draw(surface)`**: The `Dino` class draws a character with eyes, while `Bullet` draws a rounded rectangle, and `Bird`/`Bat` use polygon drawing for complex shapes.
+- **`move()`**: `Bullet` moves to the right, while `Obstacle` subclasses move to the left. The game loop calls `obj.move()` without needing to know the specific type of object.
 
 #### 3\. Encapsulation
 
 Internal states are protected and modified only through specific methods.
 
-  * **Health Management**: The `Dino` class encapsulates `hp` and `invincible_timer`. External code cannot modify HP directly; it must call `dino.take_damage()`, which internally checks if the dinosaur is currently invincible.
-  * **Healing**: The `heal()` method ensures HP never exceeds `max_hp`.
+- **Health Management**: The `Dino` class encapsulates `hp` and `invincible_timer`. External code cannot modify HP directly; it must call `dino.take_damage()`, which internally checks if the dinosaur is currently invincible.
+- **Healing**: The `heal()` method ensures HP never exceeds `max_hp`.
 
 #### 4\. Composition & Abstraction
 
-  * **Composition**: The `DinoGame` class acts as a container that composes the `UIManager` (handling HUD) and `ParticleSystem` (handling visual effects).
-  * **Abstraction**: The `DinoEnv` class abstracts the entire game into a Gym-compliant environment (`reset`, `step`, `render`), hiding the complex game loop from the RL agent.
+- **Composition**: The `DinoGame` class acts as a container that composes the `UIManager` (handling HUD) and `ParticleSystem` (handling visual effects).
+- **Abstraction**: The `DinoEnv` class abstracts the entire game into a Gym-compliant environment (`reset`, `step`, `render`), hiding the complex game loop from the RL agent.
 
 ### 🤖 RL Environment (Gym Wrapper)
 
 We wrapped the game in a custom Gym environment (`DinoEnv`) defined in `oop_project_env.py`.
 
-  * **Action Space**: `Discrete(4)` (RUN, JUMP, SHOOT, DROP)
-  * **Observation Space**: `Box(5)` containing:
-    1.  Dino Y-position
-    2.  Dino HP
-    3.  Ammo count
-    4.  Distance to nearest obstacle
-    5.  Type of nearest obstacle
+- **Action Space**: `Discrete(4)` (RUN, JUMP, SHOOT, DROP)
+- **Observation Space**: `Box(5)` containing:
+  1.  Dino Y-position
+  2.  Dino HP
+  3.  Ammo count
+  4.  Distance to nearest obstacle
+  5.  Type of nearest obstacle
 
 ### How to Run
 
@@ -148,7 +159,7 @@ python part3/dino.py
 python part3/oop_project_env.py
 ```
 
------
+---
 
 ## 📂 Project Structure
 
@@ -170,4 +181,5 @@ OOP_Final-main/
 ```
 
 ```
+
 ```
